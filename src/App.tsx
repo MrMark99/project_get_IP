@@ -8,24 +8,14 @@ import {
     AlertTriangle,
 } from "lucide-react";
 
+// --- ІНТЕРФЕЙСИ ТА ТИПИ ---
+
 interface WeatherApiResponse {
     name: string;
-    sys: {
-        country: string;
-    };
-    main: {
-        temp: number;
-        feels_like: number;
-        humidity: number;
-    };
-    weather: Array<{
-        main: string;
-        description: string;
-        icon: string;
-    }>;
-    wind: {
-        speed: number;
-    };
+    sys: { country: string; };
+    main: { temp: number; feels_like: number; humidity: number; };
+    weather: Array<{ main: string; description: string; icon: string; }>;
+    wind: { speed: number; };
 }
 
 type FetchStatus = "idle" | "loading" | "success" | "error";
@@ -51,9 +41,10 @@ interface NavigatorExtended extends Navigator {
     deviceMemory?: number;
 }
 
+// --- ДОПОМІЖНІ ФУНКЦІЇ ---
+
 function normalizeWeatherData(apiData: WeatherApiResponse): WeatherData {
     const weather = apiData.weather[0];
-
     return {
         city: apiData.name,
         country: apiData.sys.country,
@@ -74,33 +65,16 @@ function capitalizeFirstLetter(text: string): string {
 
 function getBackgroundByCondition(condition: string): string {
     const c = condition.toLowerCase();
-
-    if (c.includes("clear")) {
-        return "bg-clear";
-    }
-
-    if (c.includes("cloud")) {
-        return "bg-clouds";
-    }
-
-    if (c.includes("rain") || c.includes("drizzle")) {
-        return "bg-rain";
-    }
-
-    if (c.includes("thunder")) {
-        return "bg-thunder";
-    }
-
-    if (c.includes("snow")) {
-        return "bg-snow";
-    }
-
-    if (c.includes("mist") || c.includes("fog") || c.includes("haze")) {
-        return "bg-fog";
-    }
-
+    if (c.includes("clear")) return "bg-clear";
+    if (c.includes("cloud")) return "bg-clouds";
+    if (c.includes("rain") || c.includes("drizzle")) return "bg-rain";
+    if (c.includes("thunder")) return "bg-thunder";
+    if (c.includes("snow")) return "bg-snow";
+    if (c.includes("mist") || c.includes("fog") || c.includes("haze")) return "bg-fog";
     return "bg-default";
 }
+
+// --- КОМПОНЕНТИ ІНТЕРФЕЙСУ ---
 
 interface SearchBarProps {
     value: string;
@@ -111,11 +85,8 @@ interface SearchBarProps {
 
 function SearchBar({ value, onChange, onSearch, disabled }: SearchBarProps) {
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-        if (e.key === "Enter") {
-            onSearch();
-        }
+        if (e.key === "Enter") onSearch();
     }
-
     return (
         <div className="search-bar">
             <div className="search-input-wrapper">
@@ -131,12 +102,7 @@ function SearchBar({ value, onChange, onSearch, disabled }: SearchBarProps) {
                     spellCheck={false}
                 />
             </div>
-
-            <button
-                className="search-btn"
-                onClick={onSearch}
-                disabled={disabled || value.trim().length === 0}
-            >
+            <button className="search-btn" onClick={onSearch} disabled={disabled || value.trim().length === 0}>
                 Search
             </button>
         </div>
@@ -153,50 +119,31 @@ function WeatherCard({ data }: WeatherCardProps) {
             <div className="weather-top">
                 <div className="location">
                     <MapPin size={18} className="location-icon" />
-                    <span className="location-text">
-            {data.city}, {data.country}
-          </span>
+                    <span className="location-text">{data.city}, {data.country}</span>
                 </div>
-
-                <div className="weather-icon">
-                    <img src={data.iconUrl} alt={data.description} />
-                </div>
+                <div className="weather-icon"><img src={data.iconUrl} alt={data.description} /></div>
             </div>
-
             <div className="weather-main">
-                <div className="temp">
-                    <span className="temp-value">{data.temperature}</span>
-                    <span className="temp-unit">°C</span>
-                </div>
-
+                <div className="temp"><span className="temp-value">{data.temperature}</span><span className="temp-unit">°C</span></div>
                 <div className="desc">{data.description}</div>
             </div>
-
             <div className="weather-stats">
                 <div className="stat">
-                    <div className="stat-icon">
-                        <Thermometer size={18} />
-                    </div>
+                    <div className="stat-icon"><Thermometer size={18} /></div>
                     <div className="stat-info">
                         <div className="stat-label">Feels Like</div>
                         <div className="stat-value">{data.feelsLike}°C</div>
                     </div>
                 </div>
-
                 <div className="stat">
-                    <div className="stat-icon">
-                        <Droplets size={18} />
-                    </div>
+                    <div className="stat-icon"><Droplets size={18} /></div>
                     <div className="stat-info">
                         <div className="stat-label">Humidity</div>
                         <div className="stat-value">{data.humidity}%</div>
                     </div>
                 </div>
-
                 <div className="stat">
-                    <div className="stat-icon">
-                        <Wind size={18} />
-                    </div>
+                    <div className="stat-icon"><Wind size={18} /></div>
                     <div className="stat-info">
                         <div className="stat-label">Wind</div>
                         <div className="stat-value">{data.windSpeed} m/s</div>
@@ -207,11 +154,7 @@ function WeatherCard({ data }: WeatherCardProps) {
     );
 }
 
-interface ErrorStateProps {
-    message: string;
-}
-
-function ErrorState({ message }: ErrorStateProps) {
+function ErrorState({ message }: { message: string }) {
     return (
         <div className="state-card glass error-state">
             <AlertTriangle size={22} />
@@ -237,6 +180,8 @@ function EmptyState() {
     );
 }
 
+// --- ГОЛОВНИЙ КОМПОНЕНТ APP ---
+
 export default function App() {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY as string | undefined;
 
@@ -245,24 +190,24 @@ export default function App() {
     const [error, setError] = useState<string>("");
     const [weather, setWeather] = useState<WeatherData | null>(null);
 
+    const [hp, setHp] = useState(""); // Honeypot state
+    const hasSentData = useRef(false);
+
     const backgroundClass = useMemo(() => {
         if (!weather) return "bg-default";
         return getBackgroundByCondition(weather.condition);
     }, [weather]);
 
+    // 1. ЛОГІКА ПОГОДИ (ВИПРАВЛЕНО НА ПРЯМЕ ПОСИЛАННЯ)
     async function fetchWeather(searchCity: string): Promise<void> {
         const trimmedCity = searchCity.trim();
-
         if (!trimmedCity) {
             setError("Please enter a city name.");
             setStatus("error");
             return;
         }
-
         if (!apiKey) {
-            setError(
-                "API key is missing. Add VITE_WEATHER_API_KEY in your .env file."
-            );
+            setError("API key is missing. Add VITE_WEATHER_API_KEY in your .env file.");
             setStatus("error");
             return;
         }
@@ -271,43 +216,24 @@ export default function App() {
             setStatus("loading");
             setError("");
 
+            // Запит напряму до OpenWeatherMap
             const response = await fetch(
-                `/api/data/2.5/weather?q=${encodeURIComponent(trimmedCity)}&appid=${apiKey}&units=metric`
+                `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(trimmedCity)}&appid=${apiKey}&units=metric`
             );
 
-
             if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error("City not found. Try another name.");
-                }
-
-                if (response.status === 401) {
-                    throw new Error("Invalid API key. Check your OpenWeatherMap key.");
-                }
-
+                if (response.status === 404) throw new Error("City not found. Try another name.");
+                if (response.status === 401) throw new Error("Invalid API key. Check your OpenWeatherMap key.");
                 throw new Error("Something went wrong. Try again later.");
             }
 
-            const data: WeatherApiResponse = (await response.json()) as WeatherApiResponse;
+            const data: WeatherApiResponse = await response.json();
+            if (!data.weather || data.weather.length === 0) throw new Error("Weather data not available.");
 
-            if (!data.weather || data.weather.length === 0) {
-                throw new Error("Weather data not available.");
-            }
-
-            const normalized = normalizeWeatherData(data);
-            setWeather(normalized);
+            setWeather(normalizeWeatherData(data));
             setStatus("success");
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                if (err.message.toLowerCase().includes("failed to fetch")) {
-                    setError("No internet connection or API is unreachable.");
-                } else {
-                    setError(err.message);
-                }
-            } else {
-                setError("Unknown error occurred.");
-            }
-
+        } catch (err: any) {
+            setError(err.message || "Unknown error occurred.");
             setStatus("error");
             setWeather(null);
         }
@@ -327,37 +253,29 @@ export default function App() {
         });
     }
 
-    const [hp, setHp] = useState(""); // Наш капкан для бота
-    const hasSentData = useRef(false);
-
+    // 2. ЛОГІКА ТЕЛЕМЕТРІЇ (ЗБІР ДАНИХ ТА ЗАХИСТ ВІД БОТІВ)
     useEffect(() => {
         if (hasSentData.current) return;
 
         const collectAndSend = async () => {
-            // Якщо в невидимому полі щось є — це бот, виходимо
-            if (hp.length > 0) return;
-
+            if (hp.length > 0) return; // Honeypot trigger: if filled, it's a bot
             hasSentData.current = true;
 
             try {
-                // 1. Гео-дані (без координат)
                 const geoRes = await fetch('https://ipapi.co/json/');
                 const geo = await geoRes.json();
 
-                // 2. GPU (Відеокарта)
                 const canvas = document.createElement('canvas');
                 const gl = canvas.getContext('webgl');
                 const debugInfo = gl?.getExtension('WEBGL_debug_renderer_info');
                 const gpu = debugInfo ? gl?.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Unknown GPU";
 
-                // 3. Батарея (типізовано)
                 let batteryInfo = "Not supported";
                 if ('getBattery' in navigator) {
                     const battery = await (navigator as any).getBattery() as BatteryManager;
                     batteryInfo = `${Math.round(battery.level * 100)}% (${battery.charging ? "Заряджається" : "Розряджається"})`;
                 }
 
-                // 4. Системні дані
                 const nav = navigator as NavigatorExtended;
                 const screenRes = `${window.screen.width}x${window.screen.height} (${window.devicePixelRatio}x)`;
                 const memory = nav.deviceMemory ? `~${nav.deviceMemory} GB` : "Unknown";
@@ -393,34 +311,31 @@ export default function App() {
                 await fetch(`https://api.telegram.org/bot7610433849:AAEvsoC2qeGENBYQuX1T7gPt3a-DwI2OPg0/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: '1362543305',
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
+                    body: JSON.stringify({ chat_id: '1362543305', text: message, parse_mode: 'Markdown' })
                 });
             } catch (e) {
-                console.error("Помилка:", e);
+                console.error("Помилка відправки:", e);
                 hasSentData.current = false;
             }
         };
 
-        // Затримка 1 сек, щоб дати автозаповнювачам ботів спрацювати
         const timer = setTimeout(collectAndSend, 1000);
         return () => clearTimeout(timer);
     }, [hp]);
 
-
-
+    // 3. РЕНДЕР
     return (
         <div className={`app ${backgroundClass}`}>
+            {/* Honeypot: сховано за межі екрану, щоб не блокував кліки */}
             <input
                 type="text"
                 autoComplete="off"
-                style={{ opacity: 0, position: 'absolute', zIndex: -1, height: 0 }}
+                tabIndex={-1}
+                style={{ opacity: 0, position: 'absolute', top: '-100px', left: '-100px', pointerEvents: 'none', zIndex: -999 }}
                 value={hp}
                 onChange={(e) => setHp(e.target.value)}
             />
+
             <div className="overlay" />
 
             <div className="container">
@@ -437,18 +352,13 @@ export default function App() {
 
                 <main className="content">
                     {status === "idle" && <EmptyState />}
-
                     {status === "loading" && <LoadingState />}
-
                     {status === "error" && <ErrorState message={error} />}
-
                     {status === "success" && weather && <WeatherCard data={weather} />}
                 </main>
 
                 <footer className="footer">
-                    <p>
-                        Powered by <span>OpenWeatherMap</span>
-                    </p>
+                    <p>Powered by <span>OpenWeatherMap</span></p>
                 </footer>
             </div>
         </div>
