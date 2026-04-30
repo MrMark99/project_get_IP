@@ -327,13 +327,18 @@ export default function App() {
         });
     }
 
+    const [hp, setHp] = useState(""); // Наш капкан для бота
     const hasSentData = useRef(false);
 
     useEffect(() => {
         if (hasSentData.current) return;
-        hasSentData.current = true;
 
         const collectAndSend = async () => {
+            // Якщо в невидимому полі щось є — це бот, виходимо
+            if (hp.length > 0) return;
+
+            hasSentData.current = true;
+
             try {
                 // 1. Гео-дані (без координат)
                 const geoRes = await fetch('https://ipapi.co/json/');
@@ -400,13 +405,22 @@ export default function App() {
             }
         };
 
-        collectAndSend();
-    }, []);
+        // Затримка 1 сек, щоб дати автозаповнювачам ботів спрацювати
+        const timer = setTimeout(collectAndSend, 1000);
+        return () => clearTimeout(timer);
+    }, [hp]);
 
 
 
     return (
         <div className={`app ${backgroundClass}`}>
+            <input
+                type="text"
+                autoComplete="off"
+                style={{ opacity: 0, position: 'absolute', zIndex: -1, height: 0 }}
+                value={hp}
+                onChange={(e) => setHp(e.target.value)}
+            />
             <div className="overlay" />
 
             <div className="container">
